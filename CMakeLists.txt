@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/include/leveldb/db.h" VERSION_HEADER)
+string(REGEX MATCH ".*kMajorVersion *= *([1-9])" MAJOR_VERSION_MATCH "${VERSION_HEADER}")
+set(LEVELDB_MAJOR_VERSION ${CMAKE_MATCH_1})
+string(REGEX MATCH ".*kMinorVersion *= *([1-9]+)" MINOR_VERSION_MATCH "${VERSION_HEADER}")
+set(LEVELDB_MINOR_VERSION ${CMAKE_MATCH_1})
+
+set(LEVELDB_VERSION "${LEVELDB_MAJOR_VERSION}.${LEVELDB_MINOR_VERSION}")
+
 project(leveldb CXX)    
 set(CMAKE_DEBUG_POSTFIX "d")
 
@@ -162,6 +170,21 @@ target_link_libraries(leveldb
     ${Pthread_LIBRARY}
 )
 
+include(CMakePackageConfigHelpers)
+
+set(INSTALL_INCLUDE_DIR include)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/package-config.cmakein ${CMAKE_CURRENT_BINARY_DIR}/leveldb-config.cmake
+                              INSTALL_DESTINATION CMake
+                              PATH_VARS INSTALL_INCLUDE_DIR
+                              )
+       
+write_basic_package_version_file( ${CMAKE_CURRENT_BINARY_DIR}/leveldb-config-version.cmake VERSION ${LEVELDB_VERSION} COMPATIBILITY SameMajorVersion )
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/leveldb-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/leveldb-config-version.cmake
+        DESTINATION CMake )
+
+
+install(EXPORT leveldb-targets DESTINATION CMake)
 add_executable(leveldbutil
     db/leveldb_main.cc)
 
